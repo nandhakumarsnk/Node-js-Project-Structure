@@ -20,6 +20,33 @@ router.post("/register", async (req, res) => {
   }
 });
 
+// // User Login
+// router.post("/login", async (req, res) => {
+//   const { email, password } = req.body;
+//   try {
+//     const user = await User.findOne({ email });
+//     if (!user) return res.status(400).json({ message: "User not found" });
+
+//     const match = await bcrypt.compare(password, user.password);
+//     if (!match) return res.status(400).json({ message: "Invalid password" });
+
+//     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+//       expiresIn: "1m",
+//     });
+//     res.status(200).json({
+//       token,
+//       user: {
+//         id: user._id,
+//         name: user.name,
+//         email: user.email,
+//         // Add more fields as needed (e.g., role, profilePicture, etc.)
+//       },
+//     });
+//   } catch (error) {
+//     res.status(400).json({ error: error.message });
+//   }
+// });
+
 // User Login
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
@@ -30,11 +57,23 @@ router.post("/login", async (req, res) => {
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(400).json({ message: "Invalid password" });
 
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
+    // Generate access token (expires in 1 hour)
+    const accessToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1m",
     });
+
+    // Generate refresh token (expires in 7 days)
+    const refreshToken = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_REFRESH_SECRET,
+      {
+        expiresIn: "3m",
+      }
+    );
+
     res.status(200).json({
-      token,
+      accessToken,
+      refreshToken,
       user: {
         id: user._id,
         name: user.name,

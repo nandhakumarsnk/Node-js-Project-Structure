@@ -4,19 +4,29 @@ const authMiddleware = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
+const app = express();
+
 // Create Product
 router.post("/create", authMiddleware, async (req, res) => {
   try {
     const { name, price, description } = req.body;
-    const product = new Product({
+    // const product = new Product({
+    //   name,
+    //   price,
+    //   description,
+    //   user: req.user.userId,
+    // });
+    // await product.save();
+
+    const data = await Product.create({
       name,
       price,
       description,
       user: req.user.userId,
     });
-    await product.save();
+    console.log(data);
 
-    res.status(201).json({ message: "Product created successfully", product });
+    res.status(201).json({ message: "Product created successfully", data });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -46,5 +56,15 @@ router.get("/", authMiddleware, async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 });
+
+// router.get("/:id", async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const product = await Product.findOne({ _id: id });
+//     res.status(200).json(product);
+//   } catch (error) {
+//     res.status(400).json({ error: error.message });
+//   }
+// });
 
 module.exports = router;
