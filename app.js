@@ -5,9 +5,27 @@ const productRoutes = require("./routes/productRoutes");
 // require("dotenv").config();
 
 const app = express();
+const cors = require("cors");
+const rateLimit = require("express-rate-limit");
 
 // Middleware
 app.use(express.json());
+
+// CORS Policy
+const corsOptions = {
+  origin: "*", // Add your allowed domains here
+  methods: ["GET", "POST", "PUT", "DELETE"], // Allowed HTTP methods
+  allowedHeaders: ["Content-Type", "Authorization"], // Allowed headers
+};
+app.use(cors(corsOptions));
+
+// Rate Limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: "Too many requests from this IP, please try again later.",
+});
+app.use(limiter);
 
 // Database connection
 connectDB();
@@ -25,9 +43,6 @@ app.post("/refresh-token", async (req, res) => {
   try {
     // Verify the refresh token
     const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-
-    // Check if the refresh token is expired
-    const now = Math.floor(Date.now() / 1000);
 
     // Generate a new access token with the same user ID
     const newAccessToken = jwt.sign(
@@ -50,6 +65,14 @@ app.post("/refresh-token", async (req, res) => {
 // Routes
 app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
+
+// Error Handling Middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res
+    .status(500)
+    .json({ message: "Something went wrong, please try again later." });
+});
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
